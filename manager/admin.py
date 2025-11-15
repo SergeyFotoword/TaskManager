@@ -1,10 +1,5 @@
 from django.contrib import admin
 from .models import Category, Task, SubTask
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("id", "name")
-    search_fields = ("name",)
-
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
@@ -20,3 +15,8 @@ class SubTaskAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "task", "status", "deadline", "created_at")
     list_filter = ("status", "task")
     search_fields = ("title", "description")
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+    search_fields = ("name",)
