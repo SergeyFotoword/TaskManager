@@ -1,3 +1,87 @@
-from django.shortcuts import render
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import TaskSerializer
+from .models import Task
+from django.utils import timezone
+from django.db.models import Count
 
-# Create your views here.
+'''
+Задание 1: Эндпоинт для создания задачи
+Создайте эндпоинт для создания новой задачи. Задача должна быть создана с полями title, description, status, и deadline.
+Шаги для выполнения:
+Определите сериализатор для модели Task.
+Создайте представление для создания задачи.
+Создайте маршрут для обращения к представлению.
+'''
+
+@api_view(['POST'])
+def create_task(request):
+    serializer = TaskSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+'''
+Задание 2: Эндпоинты для получения списка задач и конкретной задачи по её ID
+Создайте два новых эндпоинта для:
+Получения списка задач
+Получения конкретной задачи по её уникальному ID
+Шаги для выполнения:
+Создайте представления для получения списка задач и конкретной задачи.
+Создайте маршруты для обращения к представлениям.
+'''
+
+@api_view(['GET'])
+def task_list(request):
+    tasks = Task.objects.all()
+    serializer = TaskSerializer(tasks, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def task_detail(request, task_id):
+    try:
+        task = Task.objects.get(id=task_id)
+    except Task.DoesNotExist:
+        return Response(
+            {"error": "Task not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = TaskSerializer(task)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+"""
+Задание 3: Агрегирующий эндпоинт для статистики задач
+Создайте эндпоинт для получения статистики задач, таких как общее количество задач,
+количество задач по каждому статусу и количество просроченных задач.
+Шаги для выполнения:
+Определите представление для агрегирования данных о задачах.
+Создайте маршрут для обращения к представлению.
+"""
+
+@api_view(['GET'])
+def task_stats(request):
+    now = timezone.now()
+
+    # total number of tasks
+    total_tasks = Task.objects.count()
+
+    # number of tasks for each status
+    status_counts = Task.objects.values('status').annotate(count=Count('status'))
+
+    # transform it into a convenient dictionary
+    status_data = {item['status']: item['count'] for item in status_counts}
+
+    # overdue tasks (deadline < now and status is not Done)
+    overdue_tasks = Task.objects.filter(deadline__lt=now).exclude(status="Done").count()
+
+    data = {
+        "total_tasks": total_tasks,
+        "status_stats": status_data,
+        "overdue_tasks": overdue_tasks
+    }
+
+    return Response(data, status=status.HTTP_200_OK)

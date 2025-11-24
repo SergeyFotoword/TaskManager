@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib import admin
 
 '''
 Модель Task:
@@ -39,6 +40,17 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+    @admin.display(description="Name (short)")
+    def short_title(self):
+        """Return short version of title"""
+        return self.title[:10] + "..." if len(self.title) > 10 else self.title
+
+    # def short_title(self):
+    #     """Returns the first 10 characters for the admin panel."""
+    #     if len(self.title) > 10:
+    #         return self.title[:10] + "..."
+    #     return self.title
 
     class Meta:
         db_table = 'task_manager_task'
