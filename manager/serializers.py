@@ -39,7 +39,7 @@ class SubTaskCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubTask
         fields = [
-            "id"
+            "id",
             "title",
             "description",
             "status",
@@ -160,3 +160,22 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ["id", "title", "description", "status", "deadline", "created_at"]
+
+class SubTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubTask
+        fields = [
+            "id",
+            "title",
+            "description",
+            "status",
+            "deadline",
+            "created_at"
+        ]
+
+

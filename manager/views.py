@@ -92,12 +92,15 @@
 # Создайте классы представлений для создания и получения списка подзадач (SubTaskListCreateView).
 # Создайте классы представлений для получения, обновления и удаления подзадач (SubTaskDetailUpdateDeleteView).
 # Добавьте маршруты в файле urls.py, чтобы использовать эти классы.
-
+from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import SubTask
-from .serializers import SubTaskSerializer, SubTaskCreateSerializer
+from .models import SubTask, Task
+from .serializers import SubTaskSerializer, SubTaskCreateSerializer, TaskSerializer
+from django.utils import timezone
+from rest_framework.decorators import api_view
+from .pagination import SubTaskPagination
 
 
 class SubTaskListCreateView(APIView):
@@ -150,3 +153,121 @@ class SubTaskDetailUpdateDeleteView(APIView):
 
         subtask.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+WEEKDAYS_MAP = {
+    "monday": 0, "понедельник": 0,
+    "tuesday": 1, "вторник": 1,
+    "wednesday": 2, "среда": 2,
+    "thursday": 3, "четверг": 3,
+    "friday": 4, "пятница": 4,
+    "saturday": 5, "суббота": 5,
+    "sunday": 6, "воскресенье": 6,
+}
+#
+#
+# @api_view(["GET"])
+# def list_tasks_by_weekday(request):
+#     weekday_param = request.query_params.get("weekday")
+#
+#     if not weekday_param:
+#         tasks = Task.objects.all()
+#         serializer = TaskSerializer(tasks, many=True)
+#         return Response(serializer.data)
+#
+#     weekday_param = weekday_param.lower().strip()
+#
+#     if weekday_param not in WEEKDAYS_MAP:
+#         return Response(
+#             {"error": "Invalid day of the week"},
+#             status=400
+#         )
+#
+#     weekday_number = WEEKDAYS_MAP[weekday_param]
+#
+#     tasks = Task.objects.filter(deadline__week_day=weekday_number + 2)
+#
+#     serializer = TaskSerializer(tasks, many=True)
+#     return Response(serializer.data)
+
+class TaskListByWeekdayView(GenericAPIView):
+
+    serializer_class = TaskSerializer
+
+    def get_queryset(self):
+        queryset = Task.objects.all()
+        weekday_param = self.request.query_params.get("weekday")
+
+        if not weekday_param:
+            return queryset
+
+        weekday_param = weekday_param.lower().strip()
+
+        if weekday_param not in WEEKDAYS_MAP:
+            return None
+
+        python_weekday = WEEKDAYS_MAP[weekday_param]
+
+        # !!!!!Django использует другие week_day: Monday=2 → (python)Monday=0
+        django_weekday = python_weekday + 2
+
+        return queryset.filter(deadline__week_day=django_weekday)
+
+    def get(self, request):
+        queryset = self.get_queryset()
+
+        if queryset is None:
+            return Response(
+                {"error": "Incorrect value for the weekday parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class SubTaskListView(GenericAPIView):
+    serializer_class = SubTaskSerializer
+    pagination_class = SubTaskPagination
+
+    def get_queryset(self):
+        return SubTask.objects.order_by("-created_at")
+
+    def get(self, request):
+        queryset = self.get_queryset()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+class SubTaskFilterView(GenericAPIView):
+    serializer_class = SubTaskSerializer
+    pagination_class = SubTaskPagination
+
+    def get_queryset(self):
+        queryset = SubTask.objects.all().order_by("-created_at")
+
+        task_title = self.request.query_params.get("task_title")
+        status_param = self.request.query_params.get("status")
+
+        if task_title:
+            queryset = queryset.filter(task__title__icontains=task_title.strip())
+
+        if status_param:
+            queryset = queryset.filter(status__iexact=status_param.strip())
+
+        return queryset
+
+    def get(self, request):
+        queryset = self.get_queryset()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
