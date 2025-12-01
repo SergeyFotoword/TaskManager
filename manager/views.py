@@ -95,28 +95,34 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.generics import(
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from rest_framework import status
 from .models import SubTask, Task
 from .serializers import SubTaskSerializer, SubTaskCreateSerializer, TaskSerializer
-from django.utils import timezone
-from rest_framework.decorators import api_view
+# from django.utils import timezone
+# from rest_framework.decorators import api_view
 from .pagination import SubTaskPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 
-class SubTaskListCreateView(APIView):
-
-    def get(self, request):
-        subtasks = SubTask.objects.all()
-        serializer = SubTaskSerializer(subtasks, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        serializer = SubTaskCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class SubTaskListCreateView(APIView):
+#
+#     def get(self, request):
+#         subtasks = SubTask.objects.all()
+#         serializer = SubTaskSerializer(subtasks, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#     def post(self, request):
+#         serializer = SubTaskCreateSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SubTaskDetailUpdateDeleteView(APIView):
 
@@ -243,6 +249,7 @@ class SubTaskListView(GenericAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+
 class SubTaskFilterView(GenericAPIView):
     serializer_class = SubTaskSerializer
     pagination_class = SubTaskPagination
@@ -271,3 +278,46 @@ class SubTaskFilterView(GenericAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class TaskListCreateView(ListCreateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+
+    # example:
+    # /tasks/?status=Done
+    # /tasks/?deadline=2025-01-30
+    filterset_fields = ["status", "deadline"]
+
+    # example:
+    # /tasks/?search=presentation
+    search_fields = ["title", "description"]
+
+    # example:
+    # /tasks/?ordering=created_at
+    # /tasks/?ordering=-created_at
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+
+
+class TaskDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+
+class SubTaskListCreateView(ListCreateAPIView):
+    queryset = SubTask.objects.all()
+    serializer_class = SubTaskSerializer
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["status", "deadline"]
+    search_fields = ["title", "description"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+
+
+class SubTaskDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = SubTask.objects.all()
+    serializer_class = SubTaskSerializer

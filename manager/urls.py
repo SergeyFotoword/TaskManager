@@ -6,13 +6,19 @@ from .views import (
     TaskListByWeekdayView,
     SubTaskListView,
     SubTaskFilterView,
+    TaskListCreateView,
+    TaskDetailView,
+    SubTaskDetailView,
 )
 
 urlpatterns = [
     path("subtasks/", SubTaskListCreateView.as_view()),
-    path("subtasks/<int:pk>/", SubTaskDetailUpdateDeleteView.as_view()),
+    # path("subtasks/<int:pk>/", SubTaskDetailUpdateDeleteView.as_view()),
     # path("tasks/", list_tasks_by_weekday),
     path("tasks/weekday", TaskListByWeekdayView.as_view()),
-    path("subtasks", SubTaskListView.as_view()),
+    # path("subtasks", SubTaskListView.as_view()),
     path("subtasks/filter", SubTaskFilterView.as_view()),
+    path("tasks/", TaskListCreateView.as_view()),
+    path("tasks/<int:pk>/", TaskDetailView.as_view()),
+    path("subtasks/<int:pk>/", SubTaskDetailView.as_view()),
 ]
