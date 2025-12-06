@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib import admin
+from django.utils import timezone
 
 '''
 Модель Task:
@@ -117,16 +118,65 @@ name: Название категории.
 Уникальность по полю 'name'.
 '''
 
+# class Category(models.Model):
+#     name = models.CharField(max_length=100, unique=True)
+#
+#     def __str__(self):
+#         return self.name
+#
+#     class Meta:
+#         db_table = 'task_manager_category'
+#         verbose_name = 'Category'
+#         verbose_name_plural = 'Categories'
+#         constraints = [
+#             models.UniqueConstraint(fields=['name'], name='unique_category_name')
+#         ]
+
+class CategoryManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(
+        max_length=100,
+        # unique=True,
+        verbose_name="Category name"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    is_deleted = models.BooleanField(
+        default=False,
+    )
+
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    objects = CategoryManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        db_table = "task_manager_category"
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name"],
+                condition=models.Q(is_deleted=False),
+                name="unique_active_category_name"
+            )
+        ]
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
 
     def __str__(self):
         return self.name
 
-    class Meta:
-        db_table = 'task_manager_category'
-        verbose_name = 'Category'
-        verbose_name_plural = 'Categories'
-        constraints = [
-            models.UniqueConstraint(fields=['name'], name='unique_category_name')
-        ]

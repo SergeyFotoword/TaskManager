@@ -65,40 +65,62 @@ class SubTaskCreateSerializer(serializers.ModelSerializer):
 Переопределите метод update для аналогичной проверки при обновлении.
 '''
 
-class CategoryCreateSerializer(serializers.ModelSerializer):
+# class CategoryCreateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Category
+#         fields = ["id", "title", "created_at"]
+#
+#     def validate_title(self, value):
+#
+#         category_id = self.instance.id if self.instance else None
+#
+#         # Checking the existence of a category with the same name
+#         # we exclude the category itself, not the duplicate
+#         qs = Category.objects.filter(title__iexact=value)
+#         if category_id:
+#             qs = qs.exclude(id=category_id)
+#
+#         if qs.exists():
+#             raise serializers.ValidationError("A category with this name already exists.")
+#         return value
+#
+#     def create(self, validated_data):
+#         title = validated_data.get("title")
+#         self.validate_title(title)
+#
+#         category = Category.objects.create(**validated_data)
+#         return category
+#
+#     def update(self, instance, validated_data):
+#
+#         title = validated_data.get("title", instance.title)
+#         self.validate_title(title)
+#
+#         instance.title = title
+#         instance.save()
+#         return instance
+
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "title", "created_at"]
+        fields = ("id", "name", "created_at")
+        read_only_fields = ("id", "created_at")
 
-    def validate_title(self, value):
+    def validate_name(self, value):
+        qs = Category.objects.filter(
+            name__iexact=value,
+            is_deleted=False
+        )
 
-        category_id = self.instance.id if self.instance else None
-
-        # Checking the existence of a category with the same name
-        # we exclude the category itself, not the duplicate
-        qs = Category.objects.filter(title__iexact=value)
-        if category_id:
-            qs = qs.exclude(id=category_id)
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
 
         if qs.exists():
-            raise serializers.ValidationError("A category with this name already exists.")
+            raise serializers.ValidationError(
+                "Category with this name already exists."
+            )
         return value
 
-    def create(self, validated_data):
-        title = validated_data.get("title")
-        self.validate_title(title)
-
-        category = Category.objects.create(**validated_data)
-        return category
-
-    def update(self, instance, validated_data):
-
-        title = validated_data.get("title", instance.title)
-        self.validate_title(title)
-
-        instance.title = title
-        instance.save()
-        return instance
 
 '''
 Задание 3: Использование вложенных сериализаторов

@@ -99,15 +99,21 @@ from rest_framework.generics import(
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
+from rest_framework.decorators import action
 from rest_framework import status
-from .models import SubTask, Task
-from .serializers import SubTaskSerializer, SubTaskCreateSerializer, TaskSerializer
+from .models import SubTask, Task, Category
+from .serializers import (
+    SubTaskSerializer,
+    SubTaskCreateSerializer,
+    TaskSerializer,
+    CategorySerializer)
 # from django.utils import timezone
 # from rest_framework.decorators import api_view
 from .pagination import SubTaskPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-
+from rest_framework.viewsets import ModelViewSet
+from django.db.models import Count
 
 # class SubTaskListCreateView(APIView):
 #
@@ -321,3 +327,29 @@ class SubTaskListCreateView(ListCreateAPIView):
 class SubTaskDetailView(RetrieveUpdateDestroyAPIView):
     queryset = SubTask.objects.all()
     serializer_class = SubTaskSerializer
+
+
+class CategoryViewSet(ModelViewSet):
+    serializer_class = CategorySerializer
+
+    queryset = Category.objects.filter(is_deleted=False)
+
+    def perform_destroy(self, instance):
+        instance.is_deleted = True
+        instance.save()
+
+    @action(detail=False, methods=["get"])
+    def count_tasks(self, request):
+        categories = (
+            self.get_queryset()
+            .annotate(tasks_count=Count("tasks"))
+        )
+
+        return Response([
+            {
+                "category_id": category.id,
+                "name": category.name,
+                "tasks_count": category.tasks_count,
+            }
+            for category in categories
+        ])
