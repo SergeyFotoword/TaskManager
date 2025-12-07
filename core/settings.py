@@ -53,6 +53,74 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} :: {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "[{levelname}] {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        # Для консоли
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+
+        # Для HTTP
+        "http_file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "http_logs.log",
+            "formatter": "verbose",
+            "level": "INFO",
+        },
+
+        # Для SQL
+        "db_file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "db_logs.log",
+            "formatter": "verbose",
+            "level": "DEBUG",
+        },
+    },
+
+    "loggers": {
+        # для Django server (runserver)
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+
+        # для HTTP requests / responses
+        "django.request": {
+            "handlers": ["http_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+
+        # для Database queries
+        "django.db.backends": {
+            "handlers": ["db_file"],
+            "level": "DEBUG",
+
+        # propagate = False
+        # ⟶ «лог обработай здесь и остановись»
+        # propagate = True
+        # ⟶ «обработай здесь и передай дальше родителю»
+            "propagate": False,
+        },
+    },
+}
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -93,6 +161,9 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
+
+    # Выбираю глобальную безопасную CursorPagination
+    "DEFAULT_PAGINATION_CLASS": "manager.pagination.DefaultCursorPagination",
 }
 
 # TEMPLATES = [
