@@ -102,6 +102,7 @@ from rest_framework.generics import(
 from rest_framework.decorators import action
 from rest_framework import status
 from .models import SubTask, Task, Category
+from .pagination import DefaultCursorPagination
 from .serializers import (
     SubTaskSerializer,
     SubTaskCreateSerializer,
@@ -109,7 +110,7 @@ from .serializers import (
     CategorySerializer)
 # from django.utils import timezone
 # from rest_framework.decorators import api_view
-from .pagination import SubTaskPagination
+# from .pagination import SubTaskPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.viewsets import ModelViewSet
@@ -239,7 +240,7 @@ class TaskListByWeekdayView(GenericAPIView):
 
 class SubTaskListView(GenericAPIView):
     serializer_class = SubTaskSerializer
-    pagination_class = SubTaskPagination
+    # pagination_class = DefaultCursorPagination
 
     def get_queryset(self):
         return SubTask.objects.order_by("-created_at")
@@ -258,7 +259,7 @@ class SubTaskListView(GenericAPIView):
 
 class SubTaskFilterView(GenericAPIView):
     serializer_class = SubTaskSerializer
-    pagination_class = SubTaskPagination
+    # pagination_class = DefaultCursorPagination
 
     def get_queryset(self):
         queryset = SubTask.objects.all().order_by("-created_at")
