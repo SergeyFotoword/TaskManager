@@ -115,6 +115,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.viewsets import ModelViewSet
 from django.db.models import Count
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 # class SubTaskListCreateView(APIView):
 #
@@ -132,6 +133,7 @@ from django.db.models import Count
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SubTaskDetailUpdateDeleteView(APIView):
+    permission_classes = [IsAdminUser]
 
     def get_object(self, pk):
         try:
@@ -205,6 +207,7 @@ WEEKDAYS_MAP = {
 class TaskListByWeekdayView(GenericAPIView):
 
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = Task.objects.all()
@@ -240,6 +243,7 @@ class TaskListByWeekdayView(GenericAPIView):
 
 class SubTaskListView(GenericAPIView):
     serializer_class = SubTaskSerializer
+    permission_classes = [IsAuthenticated]
     # pagination_class = DefaultCursorPagination
 
     def get_queryset(self):
@@ -259,6 +263,7 @@ class SubTaskListView(GenericAPIView):
 
 class SubTaskFilterView(GenericAPIView):
     serializer_class = SubTaskSerializer
+    permission_classes = [IsAdminUser]
     # pagination_class = DefaultCursorPagination
 
     def get_queryset(self):
@@ -290,6 +295,7 @@ class SubTaskFilterView(GenericAPIView):
 class TaskListCreateView(ListCreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
 
@@ -312,11 +318,13 @@ class TaskListCreateView(ListCreateAPIView):
 class TaskDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [IsAdminUser]
 
 
 class SubTaskListCreateView(ListCreateAPIView):
     queryset = SubTask.objects.all()
     serializer_class = SubTaskSerializer
+    permission_classes = [IsAuthenticated]
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "deadline"]
@@ -328,11 +336,12 @@ class SubTaskListCreateView(ListCreateAPIView):
 class SubTaskDetailView(RetrieveUpdateDestroyAPIView):
     queryset = SubTask.objects.all()
     serializer_class = SubTaskSerializer
+    permission_classes = [IsAdminUser]
 
 
 class CategoryViewSet(ModelViewSet):
     serializer_class = CategorySerializer
-
+    permission_classes = [IsAdminUser]
     queryset = Category.objects.filter(is_deleted=False)
 
     def perform_destroy(self, instance):
