@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -149,6 +150,15 @@ TEMPLATES = [
 # }
 
 REST_FRAMEWORK = {
+    # JWT по умолчанию
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+
     # Разрешаем два рендерера — JSON + HTML Browsable API
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -164,6 +174,27 @@ REST_FRAMEWORK = {
 
     # Выбираю глобальную безопасную CursorPagination
     "DEFAULT_PAGINATION_CLASS": "manager.pagination.DefaultCursorPagination",
+}
+
+SIMPLE_JWT = {
+    # Время жизни токенов
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=3),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+
+    # Ротация refresh-токенов
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    # Алгоритм подписи
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+
+    # Тип заголовка
+    "AUTH_HEADER_TYPES": ("Bearer",),
+
+    # Поле пользователя
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 # TEMPLATES = [
